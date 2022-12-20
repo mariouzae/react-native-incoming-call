@@ -19,16 +19,16 @@
             android:gravity="center"
             android:text="NUACOM"
             android:textColor="#FFFFFF"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvNuacomSubTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:text="tvNuacomSubTitle"
-            android:textColor="#FFFFFF"
-            tools:text="Incoming call" />
+            android:text="Incoming audio call"
+            android:textColor="#FFFFFF" />
     </LinearLayout>
 
     <LinearLayout
@@ -81,9 +81,10 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:fontFamily="sans-serif"
-            android:text="Mario Uzae"
+            android:text="Igor Toma"
             android:textColor="#FFFFFF"
-            android:textSize="22sp" />
+            android:textSize="22sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvInfo"
@@ -108,8 +109,7 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
+            android:layout_centerHorizontal="false"
             android:layout_marginEnd="140dp"
             android:layout_marginBottom="60dp"
             android:orientation="vertical">
@@ -120,6 +120,15 @@
                 android:layout_height="60dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_decline_call" />
+
+            <TextView
+                android:id="@+id/tvDeclineText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center"
+                android:text="@string/decline"
+                android:textColor="#919090" />
 
         </LinearLayout>
 
@@ -137,6 +146,15 @@
                 android:layout_height="60dp"
                 android:scaleType="centerInside"
                 android:src="@drawable/ic_accept_call" />
+
+            <TextView
+                android:id="@+id/tvAcceptText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="5dp"
+                android:gravity="center_horizontal"
+                android:text="@string/accept"
+                android:textColor="#919090" />
         </LinearLayout>
 
     </LinearLayout>

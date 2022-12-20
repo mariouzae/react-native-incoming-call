@@ -14,6 +14,7 @@ import android.os.Vibrator;
 import android.content.Context;
 import android.media.MediaPlayer;
 import android.provider.Settings;
+
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -21,6 +22,7 @@ import java.util.TimerTask;
 import android.app.Activity;
 
 import androidx.appcompat.app.AppCompatActivity;
+
 import android.app.ActivityManager;
 import android.app.ActivityManager.RunningAppProcessInfo;
 
@@ -42,7 +44,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     private Integer timeout = 0;
     private String uuid = "";
     static boolean active = false;
-    private static Vibrator v = (Vibrator) IncomingCallModule.reactContext.getSystemService(Context.VIBRATOR_SERVICE);
+    private static Vibrator vibrator = (Vibrator) IncomingCallModule.reactContext.getSystemService(Context.VIBRATOR_SERVICE);
     private long[] pattern = {0, 1000, 800};
     private static MediaPlayer player = MediaPlayer.create(IncomingCallModule.reactContext, Settings.System.DEFAULT_RINGTONE_URI);
     private static Activity fa;
@@ -53,8 +55,8 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     public void onStart() {
         super.onStart();
         if (this.timeout > 0) {
-              this.timer = new Timer();
-              this.timer.schedule(new TimerTask() {
+            this.timer = new Timer();
+            this.timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     // this code will be executed after timeout seconds
@@ -104,14 +106,13 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
             }
             if (bundle.containsKey("timeout")) {
                 this.timeout = bundle.getInt("timeout");
-            }
-            else this.timeout = 0;
+            } else this.timeout = 0;
         }
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
-        v.vibrate(pattern, 0);
+        vibrator.vibrate(pattern, 0);
         player.start();
 
         AnimateImage acceptCallBtn = findViewById(R.id.ivAcceptCall);
@@ -119,7 +120,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
             @Override
             public void onClick(View view) {
                 try {
-                    v.cancel();
+                    vibrator.cancel();
                     player.stop();
                     player.prepareAsync();
                     acceptDialing();
@@ -136,7 +137,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
         rejectCallBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                v.cancel();
+                vibrator.cancel();
                 player.stop();
                 player.prepareAsync();
                 dismissDialing();
@@ -151,7 +152,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     }
 
     public void dismissIncoming() {
-        v.cancel();
+        vibrator.cancel();
         player.stop();
         player.prepareAsync();
         dismissDialing();
@@ -161,26 +162,30 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
         WritableMap params = Arguments.createMap();
         params.putBoolean("accept", true);
         params.putString("uuid", uuid);
-        if (timer != null){
-          timer.cancel();
+
+        if (timer != null) {
+            timer.cancel();
         }
+
         if (!IncomingCallModule.reactContext.hasCurrentActivity()) {
             params.putBoolean("isHeadless", true);
         }
+
         KeyguardManager mKeyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
 
         if (mKeyguardManager.isDeviceLocked()) {
-          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            mKeyguardManager.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
-              @Override
-              public void onDismissSucceeded() {
-                super.onDismissSucceeded();
-              }
-            });
-          }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                mKeyguardManager.requestDismissKeyguard(this, new KeyguardManager.KeyguardDismissCallback() {
+                    @Override
+                    public void onDismissSucceeded() {
+                        super.onDismissSucceeded();
+                    }
+                });
+            }
         }
 
         sendEvent("answerCall", params);
+
         finish();
     }
 
@@ -188,9 +193,11 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
         WritableMap params = Arguments.createMap();
         params.putBoolean("accept", false);
         params.putString("uuid", uuid);
+
         if (timer != null) {
-          timer.cancel();
+            timer.cancel();
         }
+
         if (!IncomingCallModule.reactContext.hasCurrentActivity()) {
             params.putBoolean("isHeadless", true);
         }
@@ -214,13 +221,11 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     @Override
     public void onDisconnected() {
         Log.d(TAG, "onDisconnected: ");
-
     }
 
     @Override
     public void onConnectFailure() {
         Log.d(TAG, "onConnectFailure: ");
-
     }
 
     @Override
