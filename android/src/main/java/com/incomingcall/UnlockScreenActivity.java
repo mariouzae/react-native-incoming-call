@@ -2,8 +2,12 @@ package com.incomingcall;
 
 import android.app.KeyguardManager;
 import android.content.Intent;
+import android.media.AudioManager;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
 import android.util.Log;
 import android.view.WindowManager;
 import android.widget.ImageView;
@@ -43,20 +47,26 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     private ImageView ivAvatar;
     private Integer timeout = 0;
     private String uuid = "";
-    static boolean active = false;
     private static Vibrator vibrator = (Vibrator) IncomingCallModule.reactContext.getSystemService(Context.VIBRATOR_SERVICE);
     private long[] pattern = {0, 1000, 800};
     private static MediaPlayer player = MediaPlayer.create(IncomingCallModule.reactContext, Settings.System.DEFAULT_RINGTONE_URI);
     private static Activity fa;
     private Timer timer;
+    private static Ringtone ringtone;
 
+    static boolean active = false;
+    static UnlockScreenActivity instance;
+
+    public static UnlockScreenActivity getInstance() {
+        return instance;
+    }
 
     @Override
     public void onStart() {
         super.onStart();
         if (this.timeout > 0) {
-            this.timer = new Timer();
-            this.timer.schedule(new TimerTask() {
+            timer = new Timer();
+            timer.schedule(new TimerTask() {
                 @Override
                 public void run() {
                     // this code will be executed after timeout seconds
@@ -65,6 +75,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
             }, timeout);
         }
         active = true;
+        instance = this;
     }
 
     @Override
@@ -112,17 +123,14 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
-        vibrator.vibrate(pattern, 0);
-        player.start();
+        startRingtone();
 
         AnimateImage acceptCallBtn = findViewById(R.id.ivAcceptCall);
         acceptCallBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-                    vibrator.cancel();
-                    player.stop();
-                    player.prepareAsync();
+                    stopRinging();
                     acceptDialing();
                 } catch (Exception e) {
                     WritableMap params = Arguments.createMap();
@@ -137,9 +145,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
         rejectCallBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                vibrator.cancel();
-                player.stop();
-                player.prepareAsync();
+                stopRinging();
                 dismissDialing();
             }
         });
@@ -152,10 +158,43 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     }
 
     public void dismissIncoming() {
-        vibrator.cancel();
-        player.stop();
-        player.prepareAsync();
+        stopRinging();
         dismissDialing();
+    }
+
+    private void startRingtone() {
+        long[] pattern = {0, 1000, 800};
+
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+
+        int ringerMode = ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).getRingerMode();
+
+        if (ringerMode == AudioManager.RINGER_MODE_SILENT) return;
+
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            VibrationEffect vibe = VibrationEffect.createWaveform(pattern, 2);
+            vibrator.vibrate(vibe);
+        } else {
+            vibrator.vibrate(pattern, 0);
+        }
+
+        if (ringerMode == AudioManager.RINGER_MODE_VIBRATE) return;
+
+        ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getActualDefaultRingtoneUri(getApplicationContext(), RingtoneManager.TYPE_RINGTONE));
+
+        ringtone.play();
+    }
+
+    private void stopRinging() {
+        if (vibrator != null) {
+            vibrator.cancel();
+        }
+
+        int ringerMode = ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).getRingerMode();
+
+        if(ringerMode != AudioManager.RINGER_MODE_NORMAL) return;
+
+        ringtone.stop();
     }
 
     private void acceptDialing() {
