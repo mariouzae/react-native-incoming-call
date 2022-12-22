@@ -31,6 +31,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     private String uuid = "";
     private static Vibrator vibrator = (Vibrator) IncomingCallModule.reactContext.getSystemService(Context.VIBRATOR_SERVICE);
     private Timer timer;
+    private boolean ringer = true;
     private static Ringtone ringtone;
 
     static boolean active = false;
@@ -75,19 +76,24 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
             } else {
                 this.timeout = 0;
             }
+            if (bundle.containsKey("ringer")) {
+                ringer = bundle.getBoolean("ringer");
+            }
         }
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN | WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
                 | WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED | WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD);
 
-        startRingtone();
+        if (ringer) {
+            IncomingCallModule.startRingtone();
+        }
 
         AnimateImage acceptCallBtn = findViewById(R.id.ivAcceptCall);
         acceptCallBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 try {
-                    stopRinging();
+                    IncomingCallModule.stopRinging();
                     acceptDialing();
                 } catch (Exception e) {
                     WritableMap params = Arguments.createMap();
@@ -103,7 +109,7 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
             @Override
             public void onClick(View view) {
                 try {
-                    stopRinging();
+                    IncomingCallModule.stopRinging();
                     dismissDialing();
                 } catch (Exception e) {
                     WritableMap params = Arguments.createMap();
@@ -142,43 +148,8 @@ public class UnlockScreenActivity extends AppCompatActivity implements UnlockScr
     }
 
     public void dismissIncoming() {
-        stopRinging();
+        IncomingCallModule.stopRinging();
         dismissDialing();
-    }
-
-    private void startRingtone() {
-        long[] pattern = {0, 1000, 800};
-
-        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
-
-        int ringerMode = ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).getRingerMode();
-
-        if (ringerMode == AudioManager.RINGER_MODE_SILENT) return;
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            VibrationEffect vibe = VibrationEffect.createWaveform(pattern, 2);
-            vibrator.vibrate(vibe);
-        } else {
-            vibrator.vibrate(pattern, 0);
-        }
-
-        if (ringerMode == AudioManager.RINGER_MODE_VIBRATE) return;
-
-        ringtone = RingtoneManager.getRingtone(this, RingtoneManager.getActualDefaultRingtoneUri(getApplicationContext(), RingtoneManager.TYPE_RINGTONE));
-
-        ringtone.play();
-    }
-
-    private void stopRinging() {
-        if (vibrator != null) {
-            vibrator.cancel();
-        }
-
-        int ringerMode = ((AudioManager) getSystemService(Context.AUDIO_SERVICE)).getRingerMode();
-
-        if(ringerMode != AudioManager.RINGER_MODE_NORMAL) return;
-
-        ringtone.stop();
     }
 
     private void acceptDialing() {
